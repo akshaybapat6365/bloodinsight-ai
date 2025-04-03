@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "outputDirectory": ".next",
+  "env": {
+    "NEXT_PUBLIC_GEMINI_API_KEY": "REPLACE_WITH_YOUR_GEMINI_API_KEY",
+    "NEXTAUTH_URL": "REPLACE_WITH_YOUR_DEPLOYMENT_URL",
+    "NEXTAUTH_SECRET": "REPLACE_WITH_YOUR_NEXTAUTH_SECRET",
+    "GOOGLE_CLIENT_ID": "REPLACE_WITH_YOUR_GOOGLE_CLIENT_ID",
+    "GOOGLE_CLIENT_SECRET": "REPLACE_WITH_YOUR_GOOGLE_CLIENT_SECRET",
+    "DATABASE_URL": "REPLACE_WITH_YOUR_POSTGRES_CONNECTION_STRING"
+  }
+}

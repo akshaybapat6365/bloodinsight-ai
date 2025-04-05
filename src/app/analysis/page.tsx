@@ -2,8 +2,8 @@
 
 import ProtectedRoute from "@/components/protected-route";
 import { Button } from "@/components/ui/button";
-import { getGeminiService } from "@/lib/gemini-service";
 import Link from "next/link";
+import { useSearchParams } from 'next/navigation'; // Import useSearchParams
 import { useEffect, useState } from "react";
 
 interface AnalysisResult {
@@ -15,61 +15,49 @@ interface AnalysisResult {
 export default function AnalysisPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(true);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const searchParams = useSearchParams(); // Hook to get URL params
+  const fileId = searchParams.get('fileId'); // Get fileId outside useEffect
 
   useEffect(() => {
     const performAnalysis = async () => {
-      try {
-        // In a real implementation, we would get the uploaded file content from storage
-        // For now, we'll use a sample lab report for demonstration
-        const sampleLabReport = `
-          COMPREHENSIVE METABOLIC PANEL
-          
-          Patient: John Doe
-          Date: 2025-04-01
-          
-          TEST               RESULT    REFERENCE RANGE    FLAG
-          -----------------------------------------------------
-          Glucose            92 mg/dL   70-99 mg/dL        
-          BUN                15 mg/dL   7-20 mg/dL         
-          Creatinine         0.9 mg/dL  0.6-1.2 mg/dL      
-          eGFR               >90        >60 mL/min/1.73m²  
-          Sodium             140 mEq/L  136-145 mEq/L      
-          Potassium          4.2 mEq/L  3.5-5.1 mEq/L      
-          Chloride           102 mEq/L  98-107 mEq/L       
-          Carbon Dioxide     24 mEq/L   21-32 mEq/L        
-          Calcium            9.5 mg/dL  8.5-10.2 mg/dL     
-          Total Protein      7.0 g/dL   6.4-8.2 g/dL       
-          Albumin            4.5 g/dL   3.4-5.0 g/dL       
-          Globulin           2.5 g/dL   2.0-3.5 g/dL       
-          A/G Ratio          1.8        1.2-2.2            
-          Bilirubin, Total   0.7 mg/dL  0.1-1.2 mg/dL      
-          Alkaline Phosphatase 70 U/L   46-116 U/L         
-          AST                22 U/L     15-37 U/L          
-          ALT                25 U/L     16-61 U/L          
-          
-          LIPID PANEL
-          
-          TEST               RESULT    REFERENCE RANGE    FLAG
-          -----------------------------------------------------
-          Total Cholesterol  210 mg/dL  <200 mg/dL        HIGH
-          Triglycerides      120 mg/dL  <150 mg/dL        
-          HDL Cholesterol    45 mg/dL   >40 mg/dL         
-          LDL Cholesterol    141 mg/dL  <100 mg/dL        HIGH
-          
-          ADDITIONAL TESTS
-          
-          TEST               RESULT    REFERENCE RANGE    FLAG
-          -----------------------------------------------------
-          Vitamin D, 25-OH   24 ng/mL   30-50 ng/mL       LOW
-          TSH                2.5 mIU/L  0.5-4.5 mIU/L     
-        `;
+      setIsAnalyzing(true); 
+      setAnalysisResult(null); 
 
-        const geminiService = getGeminiService();
-        const result = await geminiService.analyzeLabReport(sampleLabReport);
+      // fileId is accessed from the outer scope
+      if (!fileId) { 
+        console.error("No fileId found in URL query parameters (inside performAnalysis)."); 
+        setAnalysisResult({ success: false, error: "No file identifier found. Please upload again." });
+        setIsAnalyzing(false);
+        return; // Exit if no fileId
+      }
+
+      try {
+        // Call the analyze API route, passing the fileId
+        console.log(`[AnalysisPage] Sending request to /api/analyze with fileId: ${fileId}`);
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ fileId: fileId }), // Send the fileId
+        });
+
+        const result: AnalysisResult = await response.json();
+        console.log("[AnalysisPage] Received response:", result);
+
+        if (!response.ok) {
+          console.error("[AnalysisPage] API Error:", result);
+          setAnalysisResult({ 
+            success: false, 
+            error: result.error || `Request failed with status ${response.status}` 
+          });
+        } else {
+          setAnalysisResult(result);
+        }
         
-        setAnalysisResult(result);
         setIsAnalyzing(false);
       } catch (error) {
+        console.error("[AnalysisPage] Fetch Error:", error);
         setAnalysisResult({
           success: false,
           error: error instanceof Error ? error.message : "An unknown error occurred",
@@ -78,13 +66,17 @@ export default function AnalysisPage() {
       }
     };
 
-    // Simulate a delay before starting analysis
-    const timer = setTimeout(() => {
+    // Perform analysis only if fileId is present (check the outer scope variable)
+    if (fileId) {
       performAnalysis();
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, []);
+    } else {
+      // Handle the case where the page is loaded without a fileId
+      console.error("[AnalysisPage] Page loaded without fileId in URL.");
+      setIsAnalyzing(false); 
+      setAnalysisResult({ success: false, error: "No file specified for analysis." });
+    }
+    // Add fileId to the dependency array
+  }, [fileId]); 
 
   return (
     <ProtectedRoute>
@@ -124,8 +116,9 @@ export default function AnalysisPage() {
                 <div className="p-6 rounded-lg border border-border bg-card">
                   <h2 className="text-xl font-semibold mb-4">Lab Report Analysis</h2>
                   <div className="prose prose-invert max-w-none">
-                    {analysisResult.analysis?.split('\n').map((line, index) => (
-                      <p key={index}>{line}</p>
+                    {/* Ensure analysis is treated as string before split */}
+                    {(analysisResult.analysis ?? '').split('\n').map((line, index) => (
+                      <p key={index}>{line || '\u00A0'}</p> // Render non-breaking space for empty lines
                     ))}
                   </div>
                   
@@ -175,7 +168,7 @@ export default function AnalysisPage() {
             </p>
             <p className="text-sm text-muted-foreground">
               Not intended to replace medical advice.
-            </p>
+            </p> 
           </div>
         </footer>
       </div>

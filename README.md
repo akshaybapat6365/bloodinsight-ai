@@ -2,6 +2,20 @@
 
 BloodInsight AI is an AI-powered health analytics web application that helps people understand their bloodwork and lab reports. The application uses Google's Gemini API to analyze uploaded medical documents and provide easy-to-understand explanations.
 
+## Current Status (As of 2025-04-05)
+
+- **Core Functionality:** Authentication (Google Sign-In via NextAuth v4) and basic page structure are in place. Environment variables for Google OAuth and Gemini API are configured in `.env.local`. Initial CSS issues have been resolved.
+- **File Handling:** The current implementation uses the Google Gemini Files API.
+    1. Files are uploaded from the client (`/upload`) to a server route (`/api/upload-temp`).
+    2. The server route saves the file temporarily to the OS temp directory (`os.tmpdir()`).
+    3. The temporary file path is used to upload the file to Google via `GoogleAIFileManager.uploadFile`.
+    4. The temporary file is deleted from the server.
+    5. The Google file resource name (`fileId`) is returned to the client.
+    6. The client navigates to `/analysis?fileId=<fileId>`.
+    7. The analysis page reads the `fileId` and sends it to `/api/analyze`.
+    8. The analyze route uses the `fileId` to reference the uploaded file in its prompt to the Gemini model (`fileData` part).
+- **Known Issues:** The upload/analysis flow is currently **failing**. The exact point of failure after the latest changes (implementing the Files API correctly) needs further debugging. The UI/UX also requires significant improvement.
+
 ## Features
 
 - **Google Sign-In Authentication**: Secure authentication using Google accounts

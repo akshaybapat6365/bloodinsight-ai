@@ -61,4 +61,4 @@
 - [x] Set up Vercel project
 - [x] Configure PostgreSQL database
 - [x] Set up CI/CD pipeline
-- [x] Deploy application
+- [ ] Deploy application (prepared for user deployment)

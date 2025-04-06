@@ -67,17 +67,14 @@ Important notes:
       history: [],
     });
     
-    const result = await chatSession.sendMessage({
-      contents: [{
-        role: "user",
-        parts: [{
-          inlineData: {
-            mimeType: mimeType,
-            data: base64Content
-          }
-        }]
-      }]
-    });
+    const result = await chatSession.sendMessage([
+      {
+        inlineData: {
+          mimeType: mimeType,
+          data: base64Content
+        }
+      }
+    ]);
     
     // Clean up temp file
     fs.unlinkSync(tempFilePath);

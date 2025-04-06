@@ -69,6 +69,18 @@ export default function TrendsPage() {
     return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
+  // Find report ID for a specific reading
+  const getReportIdForReading = (reading: MetricReading) => {
+    const report = allReports.find(report => 
+      report.readings.some(r => 
+        r.metricId === reading.metricId && 
+        r.date === reading.date && 
+        r.value === reading.value
+      )
+    );
+    return report?.id || "";
+  };
+
   return (
     <ProtectedRoute>
       <div className="flex min-h-screen flex-col bg-background">
@@ -205,7 +217,7 @@ export default function TrendsPage() {
                             {selectedMetricData?.normalRange.min !== null && (
                               <Line
                                 type="monotone"
-                                dataKey={() => selectedMetricData.normalRange.min}
+                                dataKey={() => selectedMetricData?.normalRange.min}
                                 stroke="#4B5563"
                                 strokeDasharray="5 5"
                                 name="Min Normal"
@@ -215,7 +227,7 @@ export default function TrendsPage() {
                             {selectedMetricData?.normalRange.max !== null && (
                               <Line
                                 type="monotone"
-                                dataKey={() => selectedMetricData.normalRange.max}
+                                dataKey={() => selectedMetricData?.normalRange.max}
                                 stroke="#4B5563"
                                 strokeDasharray="5 5"
                                 name="Max Normal"
@@ -247,74 +259,32 @@ export default function TrendsPage() {
                             </tr>
                           </thead>
                           <tbody>
-                            {metricReadings.map((reading, index) => {
-                              const report = allReports.find(r => 
-                                r.readings.some(r => 
-                                  r.metricId === reading.metricId && r.date === reading.date
-                                )
-                              );
-                              
-                              return (
-                                <tr key={index} className="border-b border-border">
-                                  <td className="py-3 px-4 text-sm">
-                                    {new Date(reading.date).toLocaleDateString()}
-                                  </td>
-                                  <td className="py-3 px-4 text-sm">
-                                    {reading.value} {selectedMetricData?.unit}
-                                  </td>
-                                  <td className="py-3 px-4 text-sm">
-                                    <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(reading.status)}`}>
-                                      {formatStatus(reading.status)}
-                                    </span>
-                                  </td>
-                                  <td className="py-3 px-4 text-sm">
-                                    {report?.name}
-                                  </td>
-                                </tr>
-                              );
-                            })}
+                            {metricReadings.map((reading, index) => (
+                              <tr key={index} className="border-b border-border">
+                                <td className="py-3 px-4 text-sm">
+                                  {new Date(reading.date).toLocaleDateString()}
+                                </td>
+                                <td className="py-3 px-4 text-sm">
+                                  {reading.value} {selectedMetricData?.unit}
+                                </td>
+                                <td className="py-3 px-4 text-sm">
+                                  <span className={`px-2 py-1 rounded text-xs ${getStatusColor(reading.status)}`}>
+                                    {formatStatus(reading.status)}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-4 text-sm">
+                                  <Link href={`/analysis?report=${getReportIdForReading(reading)}`} className="text-primary hover:underline">
+                                    View Report
+                                  </Link>
+                                </td>
+                              </tr>
+                            ))}
                           </tbody>
                         </table>
                       </div>
                     ) : (
-                      <p className="text-muted-foreground">No readings available for this metric.</p>
+                      <p className="text-muted-foreground">No data available for this metric.</p>
                     )}
-                  </div>
-                  
-                  <div className="p-6 rounded-lg border border-border bg-card">
-                    <h3 className="text-lg font-medium mb-4">About This Metric</h3>
-                    <p className="text-muted-foreground mb-4">
-                      {selectedMetricData?.description}
-                    </p>
-                    <div className="bg-secondary/20 p-4 rounded-md">
-                      <h4 className="text-sm font-medium mb-2">What to know:</h4>
-                      <ul className="space-y-2 text-sm text-muted-foreground">
-                        {selectedMetricData?.id === "glucose" && (
-                          <>
-                            <li>• Consistently high glucose levels may indicate prediabetes or diabetes.</li>
-                            <li>• Low glucose levels can cause fatigue, dizziness, and confusion.</li>
-                            <li>• Regular exercise and a balanced diet can help maintain healthy glucose levels.</li>
-                          </>
-                        )}
-                        {selectedMetricData?.id === "total_cholesterol" && (
-                          <>
-                            <li>• High cholesterol increases risk of heart disease and stroke.</li>
-                            <li>• Diet, exercise, weight, and genetics all affect cholesterol levels.</li>
-                            <li>• HDL ("good") cholesterol helps remove LDL ("bad") cholesterol from your bloodstream.</li>
-                          </>
-                        )}
-                        {selectedMetricData?.id === "vitamin_d" && (
-                          <>
-                            <li>• Vitamin D is essential for calcium absorption and bone health.</li>
-                            <li>• Sunlight exposure helps your body produce vitamin D naturally.</li>
-                            <li>• Low levels are common in people with limited sun exposure or certain dietary restrictions.</li>
-                          </>
-                        )}
-                        {!["glucose", "total_cholesterol", "vitamin_d"].includes(selectedMetricData?.id || "") && (
-                          <li>• Consult with your healthcare provider for specific information about this metric and what your results mean for your health.</li>
-                        )}
-                      </ul>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -322,71 +292,48 @@ export default function TrendsPage() {
             
             <TabsContent value="reports" className="space-y-6">
               <div className="p-6 rounded-lg border border-border bg-card">
-                <h3 className="text-lg font-medium mb-6">Reports History</h3>
+                <h3 className="text-lg font-medium mb-4">Reports History</h3>
                 
                 {allReports.length > 0 ? (
-                  <div className="space-y-6">
-                    {allReports.map(report => (
-                      <div key={report.id} className="p-4 rounded-md border border-border">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between mb-4">
-                          <div>
-                            <h4 className="text-md font-medium">{report.name}</h4>
-                            <p className="text-sm text-muted-foreground">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Date</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Report Name</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Metrics</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allReports.map((report, index) => (
+                          <tr key={index} className="border-b border-border">
+                            <td className="py-3 px-4 text-sm">
                               {new Date(report.date).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <div className="mt-2 md:mt-0 flex gap-2">
-                            <Button size="sm" variant="outline">View Details</Button>
-                            <Button size="sm" variant="outline">Export</Button>
-                          </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                          {report.readings.map(reading => {
-                            const metric = getMetricById(reading.metricId);
-                            return (
-                              <div key={reading.metricId} className="p-3 rounded-md bg-secondary/10">
-                                <div className="flex justify-between items-center mb-1">
-                                  <span className="text-sm font-medium">{metric?.name}</span>
-                                  <span className={`px-2 py-0.5 rounded-full text-xs ${getStatusColor(reading.status)}`}>
-                                    {formatStatus(reading.status)}
-                                  </span>
-                                </div>
-                                <div className="text-lg font-semibold">
-                                  {reading.value} {metric?.unit}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))}
+                            </td>
+                            <td className="py-3 px-4 text-sm">
+                              {report.name}
+                            </td>
+                            <td className="py-3 px-4 text-sm">
+                              {report.readings.length} metrics
+                            </td>
+                            <td className="py-3 px-4 text-sm">
+                              <Link href={`/analysis?report=${report.id}`} className="text-primary hover:underline">
+                                View Details
+                              </Link>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 ) : (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground mb-4">
-                      You haven't uploaded any reports yet.
-                    </p>
-                    <Button asChild>
-                      <Link href="/upload">Upload Your First Report</Link>
-                    </Button>
-                  </div>
+                  <p className="text-muted-foreground">No reports available.</p>
                 )}
               </div>
             </TabsContent>
           </Tabs>
         </main>
-
-        <footer className="border-t border-border py-6 bg-background">
-          <div className="container flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">
-              © 2025 BloodInsight AI. For educational purposes only.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Not intended to replace medical advice.
-            </p>
-          </div>
-        </footer>
       </div>
     </ProtectedRoute>
   );

@@ -28,9 +28,11 @@ Important notes:
 export class GeminiService {
   private genAI: GoogleGenerativeAI | null = null; // Initialize as null
   private model: any; // Consider using a more specific type if available from SDK
+  private currentApiKey: string | null = null;
 
   constructor() {
     if (apiKey) { // Only initialize if the key exists
+      this.currentApiKey = apiKey;
       this.genAI = new GoogleGenerativeAI(apiKey);
       this.model = this.genAI.getGenerativeModel({
         model: "gemini-2.5-pro-exp-03-25", // Ensure this model name is correct and available
@@ -40,19 +42,31 @@ export class GeminiService {
       console.error("GeminiService initialized without API key.");
       this.model = null; // Ensure model is null if service can't initialize
     }
-    // Removed extra }); here
   }
 
-  // Method to update API key (for admin use) - This approach is problematic with server-side env vars
-  // Consider removing this or implementing a secure way to update server-side config if needed.
-  // public updateApiKey(newKey: string) {
-  //   apiKey = newKey; // This won't work reliably for server-side env vars
-  //   this.genAI = new GoogleGenerativeAI(apiKey);
-  //   this.model = this.genAI.getGenerativeModel({
-  //     model: "gemini-2.5-pro-exp-03-25",
-  //   });
-  //   return true;
-  // }
+  // Method to update API key (for admin use)
+  public updateApiKey(newKey: string) {
+    if (!newKey || newKey.trim() === '') {
+      throw new Error("API key cannot be empty");
+    }
+    
+    try {
+      // Store the new key
+      this.currentApiKey = newKey;
+      
+      // Reinitialize the service with the new key
+      this.genAI = new GoogleGenerativeAI(newKey);
+      this.model = this.genAI.getGenerativeModel({
+        model: "gemini-2.5-pro-exp-03-25",
+      });
+      
+      console.log("Gemini API key updated successfully");
+      return true;
+    } catch (error) {
+      console.error("Failed to update Gemini API key:", error);
+      throw new Error("Failed to update API key: " + (error instanceof Error ? error.message : "Unknown error"));
+    }
+  }
 
   // Method to update system prompt (for admin use)
   public updateSystemPrompt(newPrompt: string) {

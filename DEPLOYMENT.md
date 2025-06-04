@@ -74,8 +74,13 @@ npx prisma migrate deploy
 
 1. Push your code to a Git repository (GitHub, GitLab, or Bitbucket)
 2. Import the project in Vercel
-3. Configure the environment variables
-4. Deploy the application
+3. Install dependencies locally before running the build:
+   ```bash
+   npm install
+   ```
+   This step must be completed prior to executing `npm run build`.
+4. Configure the environment variables
+5. Deploy the application
 
 ## Post-Deployment
 

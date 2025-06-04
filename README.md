@@ -72,6 +72,11 @@ BloodInsight AI is an AI-powered health analytics web application that helps peo
    ```bash
    npm run dev
    ```
+6. (Optional) Lint and build the project. Make sure you have run `npm install` before executing these commands:
+   ```bash
+   npm run lint
+   npm run build
+   ```
 
 ## Deployment
 

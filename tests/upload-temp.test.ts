@@ -5,9 +5,11 @@ import path from 'node:path';
 let uploadFileMock: any;
 
 vi.mock('@google/generative-ai/server', () => ({
-  GoogleAIFileManager: vi.fn().mockImplementation(() => ({
-    uploadFile: (...args: any[]) => uploadFileMock(...args)
-  }))
+  GoogleAIFileManager: class {
+    uploadFile(...args: any[]) {
+      return uploadFileMock(...args);
+    }
+  }
 }));
 
 describe('POST /api/upload-temp', () => {

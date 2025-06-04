@@ -124,4 +124,13 @@ describe('POST /api/upload-temp', () => {
     expect(writeSpy).not.toHaveBeenCalled();
     expect(unlinkSpy).not.toHaveBeenCalled();
   });
+
+  it('defaults to 5MB when parseInt yields NaN', async () => {
+    process.env.GEMINI_API_KEY = 'key';
+    process.env.MAX_UPLOAD_BYTES = 'NaN';
+
+    const { MAX_UPLOAD_BYTES } = await import('../src/app/api/upload-temp/route');
+
+    expect(MAX_UPLOAD_BYTES).toBe(5 * 1024 * 1024);
+  });
 });

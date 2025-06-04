@@ -12,9 +12,8 @@ export default function AdminRoute({ children }: AdminRouteProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  // In a real application, you would check if the user has admin privileges
-  // For now, we'll use a hardcoded admin email for demonstration
-  const isAdmin = session?.user?.email === "admin@bloodinsight.ai";
+  // Admin access is determined via the isAdmin flag from the session
+  const isAdmin = session?.user?.isAdmin;
 
   useEffect(() => {
     if (status === "loading") return; // Do nothing while loading

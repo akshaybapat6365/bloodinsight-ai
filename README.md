@@ -24,6 +24,8 @@ BloodInsight AI is an AI-powered health analytics web application that helps peo
 - **Trends Analysis**: Track health metrics over time with interactive visualizations
 - **Export Functionality**: Export results in PDF and CSV formats
 - **Admin Console**: Manage system prompts, monitor usage, and update API keys
+- **AdminRoute**: Client-side component that redirects non-admin users based on
+  the `isAdmin` flag in their session
 - **Mobile Responsive**: Optimized for all device sizes
 - **Dark Theme**: Modern, professional dark theme using ShadcnUI components
 
@@ -96,7 +98,9 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions.
 
 The `/api/admin/gemini` endpoint allows administrators to manage Gemini-related
 settings. The route is protected by NextAuth and only users with `isAdmin = true`
-can access it. Unauthorized requests return `401` or `403`.
+can access it. The `isAdmin` flag is included in the user's session token and is
+checked by both API routes and the `AdminRoute` component. Unauthorized requests
+return `401` or `403`.
 
 - **GET** `/api/admin/gemini`
   - Returns the current system prompt:

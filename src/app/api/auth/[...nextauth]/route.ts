@@ -5,7 +5,7 @@ import type { User } from "next-auth";
 import type { JWT } from "next-auth/jwt"; // Keep type imports if needed elsewhere, adjust if not
 
 // Define authOptions with NextAuthOptions type for v4
-const authOptions: NextAuthOptions = {
+export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
       // Ensure environment variables are defined and non-empty

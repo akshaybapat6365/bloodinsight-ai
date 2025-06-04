@@ -12,9 +12,11 @@ let reportCreateMock: any;
 let reportUpdateMock: any;
 
 vi.mock('@google/generative-ai/server', () => ({
-  GoogleAIFileManager: vi.fn().mockImplementation(() => ({
-    retrieveFile: (...args: any[]) => retrieveFileMock(...args)
-  }))
+  GoogleAIFileManager: class {
+    retrieveFile(...args: any[]) {
+      return retrieveFileMock(...args);
+    }
+  }
 }));
 
 vi.mock('next-auth/next', () => ({
@@ -39,13 +41,15 @@ vi.mock('@/lib/gemini-service', () => ({
 }));
 
 vi.mock('@google/generative-ai', () => ({
-  GoogleGenerativeAI: vi.fn().mockImplementation(() => ({
-    getGenerativeModel: vi.fn().mockReturnValue({
-      startChat: vi.fn().mockReturnValue({
-        sendMessage: (...args: any[]) => sendMessageMock(...args)
-      })
-    })
-  }))
+  GoogleGenerativeAI: class {
+    getGenerativeModel() {
+      return {
+        startChat: vi.fn().mockReturnValue({
+          sendMessage: (...args: any[]) => sendMessageMock(...args)
+        })
+      };
+    }
+  }
 }));
 
 describe('POST /api/analyze', () => {

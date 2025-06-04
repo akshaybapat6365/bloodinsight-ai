@@ -7,6 +7,9 @@ let findUniqueMock: any;
 let geminiConfigMock: any;
 let apiUsageCreateMock: any;
 let getGeminiServiceMock: any;
+let reportFindFirstMock: any;
+let reportCreateMock: any;
+let reportUpdateMock: any;
 
 vi.mock('@google/generative-ai/server', () => ({
   GoogleAIFileManager: vi.fn().mockImplementation(() => ({
@@ -23,6 +26,11 @@ vi.mock('@/lib/prisma', () => ({
     user: { findUnique: (...args: any[]) => findUniqueMock(...args) },
     geminiConfig: { findFirst: (...args: any[]) => geminiConfigMock(...args) },
     apiUsage: { create: (...args: any[]) => apiUsageCreateMock(...args) },
+    report: {
+      findFirst: (...args: any[]) => reportFindFirstMock(...args),
+      create: (...args: any[]) => reportCreateMock(...args),
+      update: (...args: any[]) => reportUpdateMock(...args),
+    },
   }
 }));
 
@@ -50,6 +58,9 @@ describe('POST /api/analyze', () => {
     geminiConfigMock = vi.fn();
     apiUsageCreateMock = vi.fn();
     getGeminiServiceMock = { getSystemPrompt: vi.fn().mockReturnValue('prompt') };
+    reportFindFirstMock = vi.fn();
+    reportCreateMock = vi.fn();
+    reportUpdateMock = vi.fn();
   });
 
   afterEach(() => {
@@ -75,6 +86,8 @@ describe('POST /api/analyze', () => {
     const body = await res.json();
     expect(body.success).toBe(true);
     expect(body.analysis).toBe('analysis data');
+    expect(reportCreateMock).not.toHaveBeenCalled();
+    expect(reportUpdateMock).not.toHaveBeenCalled();
   });
 
   it('returns 400 when fileId missing', async () => {
@@ -97,5 +110,23 @@ describe('POST /api/analyze', () => {
     expect(res.status).toBe(500);
     const body = await res.json();
     expect(body.success).toBe(false);
+  });
+
+  it('stores analysis when user found', async () => {
+    process.env.GEMINI_API_KEY = 'key';
+    getServerSessionMock.mockResolvedValue({ user: { email: 'a@test.com' } });
+    findUniqueMock.mockResolvedValue({ id: 'u1' });
+    geminiConfigMock.mockResolvedValue(null);
+    apiUsageCreateMock.mockResolvedValue({});
+    retrieveFileMock.mockResolvedValue({ data: Buffer.from('1'), mimeType: 'text/plain' });
+    sendMessageMock.mockResolvedValue({ response: { text: () => 'analysis' } });
+    reportFindFirstMock.mockResolvedValue(null);
+    reportCreateMock.mockResolvedValue({});
+
+    const { POST } = await import('../src/app/api/analyze/route');
+    const req = new Request('http://test', { method: 'POST', body: JSON.stringify({ fileId: 'abc' }) });
+    const res = await POST(req as any);
+    expect(res.status).toBe(200);
+    expect(reportCreateMock).toHaveBeenCalled();
   });
 });

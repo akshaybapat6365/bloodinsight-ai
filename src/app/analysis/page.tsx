@@ -6,6 +6,7 @@ import Layout from "@/components/layout";
 import Link from "next/link";
 import { useSearchParams } from 'next/navigation'; // Import useSearchParams
 import { useEffect, useState } from "react";
+import { fetchReports, Report } from "@/lib/trends-data";
 
 interface AnalysisResult {
   success: boolean;
@@ -22,63 +23,75 @@ export default function AnalysisPage() {
 
   useEffect(() => {
     const performAnalysis = async () => {
-      setIsAnalyzing(true); 
-      setAnalysisResult(null); 
+      setIsAnalyzing(true);
+      setAnalysisResult(null);
 
-      // fileId is accessed from the outer scope
-      if (!fileId) { 
-        console.error("No fileId found in URL query parameters (inside performAnalysis)."); 
+      if (!fileId) {
+        console.error("No fileId found in URL query parameters (inside performAnalysis).");
         setAnalysisResult({ success: false, error: "No file identifier found. Please upload again." });
         setIsAnalyzing(false);
-        return; // Exit if no fileId
+        return;
       }
 
       try {
-        // Call the analyze API route, passing the fileId
         console.log(`[AnalysisPage] Sending request to /api/analyze with fileId: ${fileId}`);
         const response = await fetch('/api/analyze', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ fileId: fileId }), // Send the fileId
+          body: JSON.stringify({ fileId }),
         });
 
         const result: AnalysisResult = await response.json();
-        console.log("[AnalysisPage] Received response:", result);
+        console.log('[AnalysisPage] Received response:', result);
 
         if (!response.ok) {
-          console.error("[AnalysisPage] API Error:", result);
-          setAnalysisResult({ 
-            success: false, 
-            error: result.error || `Request failed with status ${response.status}` 
+          console.error('[AnalysisPage] API Error:', result);
+          setAnalysisResult({
+            success: false,
+            error: result.error || `Request failed with status ${response.status}`,
           });
         } else {
           setAnalysisResult(result);
         }
-        
+
         setIsAnalyzing(false);
       } catch (error) {
-        console.error("[AnalysisPage] Fetch Error:", error);
+        console.error('[AnalysisPage] Fetch Error:', error);
         setAnalysisResult({
           success: false,
-          error: error instanceof Error ? error.message : "An unknown error occurred",
+          error: error instanceof Error ? error.message : 'An unknown error occurred',
         });
         setIsAnalyzing(false);
       }
     };
 
-    // Perform analysis only if fileId is present (check the outer scope variable)
-    if (fileId) {
-      performAnalysis();
-    } else {
-      // Handle the case where the page is loaded without a fileId
-      console.error("[AnalysisPage] Page loaded without fileId in URL.");
-      setIsAnalyzing(false); 
-      setAnalysisResult({ success: false, error: "No file specified for analysis." });
-    }
-    // Add fileId to the dependency array
-  }, [fileId]); 
+    const loadStoredOrAnalyze = async () => {
+      if (!fileId) {
+        console.error('Analysis page loaded without fileId.');
+        setIsAnalyzing(false);
+        setAnalysisResult({ success: false, error: 'No file specified for analysis.' });
+        return;
+      }
+
+      try {
+        const reports = await fetchReports();
+        const match = reports.find((r: Report) => r.fileId === fileId);
+        if (match && match.textAnalysis) {
+          setAnalysisResult({ success: true, analysis: match.textAnalysis, timestamp: match.date });
+          setIsAnalyzing(false);
+          return;
+        }
+      } catch (err) {
+        console.error('Failed to load stored analysis', err);
+      }
+
+      await performAnalysis();
+    };
+
+    loadStoredOrAnalyze();
+  }, [fileId]);
 
   return (
     <ProtectedRoute>

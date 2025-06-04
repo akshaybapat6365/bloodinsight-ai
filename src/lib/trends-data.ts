@@ -25,6 +25,7 @@ export interface Report {
   date: string;
   name: string;
   fileId?: string;
+  textAnalysis?: string;
   readings: MetricReading[];
 }
 

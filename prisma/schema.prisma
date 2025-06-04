@@ -58,6 +58,7 @@ model Report {
   date        DateTime
   fileUrl     String?
   fileId      String?
+  textAnalysis String? @db.Text
   fileType    String?
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt

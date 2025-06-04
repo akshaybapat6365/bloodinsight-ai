@@ -2,6 +2,7 @@
 
 import ProtectedRoute from "@/components/protected-route";
 import { Button } from "@/components/ui/button";
+import Layout from "@/components/layout";
 import Link from "next/link";
 import { useSearchParams } from 'next/navigation'; // Import useSearchParams
 import { useEffect, useState } from "react";
@@ -81,23 +82,15 @@ export default function AnalysisPage() {
 
   return (
     <ProtectedRoute>
-      <div className="flex min-h-screen flex-col bg-background">
-        <header className="sticky top-0 z-10 w-full border-b border-border bg-background/95 backdrop-blur">
-          <div className="container flex h-16 items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Link href="/dashboard" className="text-xl font-bold text-primary">
-                BloodInsight AI
-              </Link>
-            </div>
-            <nav className="flex items-center gap-4">
-              <Button variant="ghost" asChild>
-                <Link href="/dashboard">Dashboard</Link>
-              </Button>
-            </nav>
-          </div>
-        </header>
-
-        <main className="flex-1 container py-8">
+      <Layout
+        homeHref="/dashboard"
+        headerRight={
+          <Button variant="ghost" asChild>
+            <Link href="/dashboard">Dashboard</Link>
+          </Button>
+        }
+      >
+        <div className="container py-8">
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-3xl font-bold">Analysis Results</h1>
           </div>
@@ -160,19 +153,8 @@ export default function AnalysisPage() {
               </div>
             </div>
           )}
-        </main>
-
-        <footer className="border-t border-border py-6 bg-background">
-          <div className="container flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">
-              © 2025 BloodInsight AI. For educational purposes only.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Not intended to replace medical advice.
-            </p> 
-          </div>
-        </footer>
-      </div>
+        </div>
+      </Layout>
     </ProtectedRoute>
   );
 }

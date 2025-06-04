@@ -2,24 +2,17 @@
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import Layout from "@/components/layout";
 
 export default function Home() {
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <header className="sticky top-0 z-10 w-full border-b border-border bg-background/95 backdrop-blur">
-        <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-xl font-bold text-primary">BloodInsight AI</span>
-          </div>
-          <nav className="flex items-center gap-4">
-            <Button variant="ghost" asChild>
-              <Link href="/login">Sign In</Link>
-            </Button>
-          </nav>
-        </div>
-      </header>
-      
-      <main className="flex-1">
+    <Layout
+      headerRight={
+        <Button variant="ghost" asChild>
+          <Link href="/login">Sign In</Link>
+        </Button>
+      }
+    >
         <section className="py-20">
           <div className="container flex flex-col items-center text-center">
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
@@ -95,18 +88,6 @@ export default function Home() {
             </Button>
           </div>
         </section>
-      </main>
-      
-      <footer className="border-t border-border py-6 bg-background">
-        <div className="container flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-muted-foreground">
-            © 2025 BloodInsight AI. For educational purposes only.
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Not intended to replace medical advice.
-          </p>
-        </div>
-      </footer>
-    </div>
+    </Layout>
   );
 }

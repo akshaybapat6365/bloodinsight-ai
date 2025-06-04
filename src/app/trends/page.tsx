@@ -3,9 +3,15 @@
 import ProtectedRoute from "@/components/protected-route";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { HealthMetric, MetricReading, useTrendsData } from "@/lib/trends-data";
+import {
+  HealthMetric,
+  MetricReading,
+  Report,
+  fetchHealthMetrics,
+  fetchReports,
+} from "@/lib/trends-data";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   LineChart, 
   Line, 
@@ -18,19 +24,41 @@ import {
 } from 'recharts';
 
 export default function TrendsPage() {
-  const { 
-    metrics, 
-    getMetricReadings, 
-    getMetricById, 
-    getMetricsByCategory, 
-    getAllReports 
-  } = useTrendsData();
-  
-  const [selectedMetric, setSelectedMetric] = useState<string>("glucose");
+  const [metrics, setMetrics] = useState<HealthMetric[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [selectedMetric, setSelectedMetric] = useState<string>("");
   const [activeTab, setActiveTab] = useState("timeline");
-  
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [m, r] = await Promise.all([fetchHealthMetrics(), fetchReports()]);
+        setMetrics(m);
+        setReports(r);
+        if (m.length > 0) setSelectedMetric(m[0].id);
+      } catch (err) {
+        console.error("Failed to load trends data", err);
+      }
+    };
+    load();
+  }, []);
+
+  const getMetricById = (id: string) => metrics.find(m => m.id === id);
+  const getMetricsByCategory = () => {
+    const categories: { [key: string]: HealthMetric[] } = {};
+    metrics.forEach(metric => {
+      if (!categories[metric.category]) categories[metric.category] = [];
+      categories[metric.category].push(metric);
+    });
+    return categories;
+  };
+  const getMetricReadings = (metricId: string) =>
+    reports
+      .flatMap(r => r.readings.filter(read => read.metricId === metricId))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
   const metricsByCategory = getMetricsByCategory();
-  const allReports = getAllReports();
+  const allReports = reports;
   const selectedMetricData = getMetricById(selectedMetric);
   const metricReadings = getMetricReadings(selectedMetric);
   

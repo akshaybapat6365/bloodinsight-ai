@@ -1,4 +1,3 @@
-"use client";
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 

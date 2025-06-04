@@ -3,7 +3,6 @@
 import AdminRoute from "@/components/admin-route";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getGeminiService } from "@/lib/gemini-service";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -14,13 +13,17 @@ export default function AdminPage() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateMessage, setUpdateMessage] = useState({ type: "", message: "" });
 
-  // Load the current system prompt when the component mounts
+  // Load the current system prompt from the server when the component mounts
   useEffect(() => {
-    const geminiService = getGeminiService();
-    setSystemPrompt(geminiService.getSystemPrompt());
+    fetch("/api/admin/gemini")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.systemPrompt) setSystemPrompt(data.systemPrompt);
+      })
+      .catch((err) => console.error(err));
   }, []);
 
-  const handleApiKeyUpdate = () => {
+  const handleApiKeyUpdate = async () => {
     if (!apiKey.trim()) {
       setUpdateMessage({ type: "error", message: "API key cannot be empty" });
       return;
@@ -28,21 +31,26 @@ export default function AdminPage() {
 
     setIsUpdating(true);
     try {
-      const geminiService = getGeminiService();
-      geminiService.updateApiKey(apiKey);
-      setUpdateMessage({ type: "success", message: "API key updated successfully" });
-      setApiKey("");
-    } catch (error) {
-      setUpdateMessage({ 
-        type: "error", 
-        message: error instanceof Error ? error.message : "Failed to update API key" 
+      const res = await fetch("/api/admin/gemini", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "updateApiKey", value: apiKey }),
       });
+      if (res.ok) {
+        setUpdateMessage({ type: "success", message: "API key updated successfully" });
+        setApiKey("");
+      } else {
+        const data = await res.json();
+        setUpdateMessage({ type: "error", message: data.error || "Failed to update API key" });
+      }
+    } catch (error) {
+      setUpdateMessage({ type: "error", message: "Failed to update API key" });
     } finally {
       setIsUpdating(false);
     }
   };
 
-  const handleSystemPromptUpdate = () => {
+  const handleSystemPromptUpdate = async () => {
     if (!systemPrompt.trim()) {
       setUpdateMessage({ type: "error", message: "System prompt cannot be empty" });
       return;
@@ -50,14 +58,19 @@ export default function AdminPage() {
 
     setIsUpdating(true);
     try {
-      const geminiService = getGeminiService();
-      geminiService.updateSystemPrompt(systemPrompt);
-      setUpdateMessage({ type: "success", message: "System prompt updated successfully" });
-    } catch (error) {
-      setUpdateMessage({ 
-        type: "error", 
-        message: error instanceof Error ? error.message : "Failed to update system prompt" 
+      const res = await fetch("/api/admin/gemini", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "updateSystemPrompt", value: systemPrompt }),
       });
+      if (res.ok) {
+        setUpdateMessage({ type: "success", message: "System prompt updated successfully" });
+      } else {
+        const data = await res.json();
+        setUpdateMessage({ type: "error", message: data.error || "Failed to update system prompt" });
+      }
+    } catch (error) {
+      setUpdateMessage({ type: "error", message: "Failed to update system prompt" });
     } finally {
       setIsUpdating(false);
     }

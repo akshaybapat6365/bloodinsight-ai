@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getGeminiService } from "@/lib/gemini-service";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -15,10 +15,10 @@ export default function AdminPage() {
   const [updateMessage, setUpdateMessage] = useState({ type: "", message: "" });
 
   // Load the current system prompt when the component mounts
-  useState(() => {
+  useEffect(() => {
     const geminiService = getGeminiService();
     setSystemPrompt(geminiService.getSystemPrompt());
-  });
+  }, []);
 
   const handleApiKeyUpdate = () => {
     if (!apiKey.trim()) {

@@ -16,7 +16,7 @@ Before deploying, ensure you have:
 The following environment variables need to be configured in your Vercel project:
 
 ```
-NEXT_PUBLIC_GEMINI_API_KEY=your_gemini_api_key
+GEMINI_API_KEY=your_gemini_api_key
 NEXTAUTH_URL=your_deployment_url (e.g., https://bloodinsight-ai.vercel.app)
 NEXTAUTH_SECRET=your_nextauth_secret (generate with `openssl rand -base64 32`)
 GOOGLE_CLIENT_ID=your_google_client_id
@@ -67,7 +67,7 @@ npx prisma migrate deploy
 
 1. Go to the Google AI Studio (https://makersuite.google.com/)
 2. Get an API key for the Gemini API
-3. Set this as the `NEXT_PUBLIC_GEMINI_API_KEY` environment variable
+3. Set this as the `GEMINI_API_KEY` environment variable
 
 ### 5. Vercel Deployment
 

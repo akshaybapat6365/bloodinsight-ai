@@ -88,7 +88,9 @@ After deployment, you should:
 
 2. Access the admin console at `https://your-domain.vercel.app/admin`
 
-3. Update the Gemini API key and system prompt in the admin console
+3. Update the Gemini API key and system prompt in the admin console. These
+   updates are sent to the protected `/api/admin/gemini` endpoint using a JSON
+   payload with an `action` (`updateApiKey` or `updateSystemPrompt`) and `value`.
 
 ## Monitoring and Maintenance
 

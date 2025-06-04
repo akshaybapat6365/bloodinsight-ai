@@ -5,54 +5,27 @@ import AdminRoute from "@/components/admin-route";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/layout";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { fetchFeedback, FeedbackItem } from "@/lib/feedback";
 
 export default function FeedbackPage() {
   const [activeTab, setActiveTab] = useState("all");
 
-  // Sample feedback data
-  const feedbackItems = [
-    {
-      id: 1,
-      user: "user123@example.com",
-      date: "2025-04-01",
-      category: "Analysis",
-      status: "New",
-      message: "The analysis was very helpful, but I wish it would explain more about what my cholesterol levels mean for my overall health."
-    },
-    {
-      id: 2,
-      user: "user456@example.com",
-      date: "2025-03-30",
-      category: "UI/UX",
-      status: "In Progress",
-      message: "The dark theme is great, but the text is sometimes hard to read on mobile devices."
-    },
-    {
-      id: 3,
-      user: "user789@example.com",
-      date: "2025-03-28",
-      category: "Feature Request",
-      status: "Completed",
-      message: "It would be helpful to have a way to compare multiple reports side by side."
-    },
-    {
-      id: 4,
-      user: "user321@example.com",
-      date: "2025-03-25",
-      category: "Bug",
-      status: "New",
-      message: "When I try to upload a PDF with multiple pages, only the first page gets analyzed."
-    },
-    {
-      id: 5,
-      user: "user654@example.com",
-      date: "2025-03-22",
-      category: "Analysis",
-      status: "Completed",
-      message: "The vitamin D recommendations were very specific and helpful. Thank you!"
-    }
-  ];
+  const [feedbackItems, setFeedbackItems] = useState<FeedbackItem[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const data = await fetchFeedback();
+        setFeedbackItems(data);
+      } catch (err) {
+        console.error("Failed to load feedback", err);
+        setLoadError("Failed to load feedback");
+      }
+    };
+    load();
+  }, []);
 
   const filteredFeedback = activeTab === "all" 
     ? feedbackItems 
@@ -88,6 +61,11 @@ export default function FeedbackPage() {
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-3xl font-bold">Feedback Management</h1>
           </div>
+          {loadError && (
+            <div className="mb-6 p-3 bg-destructive/10 border border-destructive/30 rounded text-destructive text-sm">
+              {loadError}
+            </div>
+          )}
 
           <Tabs defaultValue="all" className="w-full" onValueChange={setActiveTab}>
             <TabsList className="grid grid-cols-4 mb-8">
@@ -155,7 +133,6 @@ export default function FeedbackPage() {
               </div>
             </TabsContent>
           </Tabs>
-        </main>
 
         </div>
       </Layout>

@@ -1,8 +1,9 @@
 import NextAuth from "next-auth";
 import type { NextAuthOptions } from "next-auth"; // Use import type
 import GoogleProvider from "next-auth/providers/google";
-import type { User } from "next-auth"; 
+import type { User } from "next-auth";
 import type { JWT } from "next-auth/jwt"; // Keep type imports if needed elsewhere, adjust if not
+import { prisma } from "@/lib/prisma";
 
 // Define authOptions with NextAuthOptions type for v4
 export const authOptions: NextAuthOptions = {
@@ -21,21 +22,25 @@ export const authOptions: NextAuthOptions = {
     // Note: v4 callback structure might differ slightly, especially JWT/session interaction
     // Review v4 docs if more complex logic is needed here.
     async session({ session, token }) {
-      // Example: Add user ID from token to session
       if (session?.user && token?.sub) {
-        // The way to extend the Session User type might differ in v4
-        // This is a common pattern, but verify based on v4 docs/types
         (session.user as User & { id: string }).id = token.sub;
+      }
+      if (session?.user) {
+        (session.user as User & { isAdmin?: boolean }).isAdmin = (token as JWT &
+          { isAdmin?: boolean }).isAdmin;
       }
       return session;
     },
-    // Add jwt callback if you need to customize the JWT token
-    // async jwt({ token, user }) {
-    //   if (user) {
-    //     token.id = user.id;
-    //   }
-    //   return token;
-    // }
+    async jwt({ token, user }) {
+      if (user) {
+        const dbUser = await prisma.user.findUnique({
+          where: { email: user.email ?? "" },
+          select: { isAdmin: true },
+        });
+        (token as JWT & { isAdmin?: boolean }).isAdmin = dbUser?.isAdmin ?? false;
+      }
+      return token;
+    },
   },
   // The secret is automatically picked up from NEXTAUTH_SECRET env var in v4
   // No need to explicitly define 'secret: process.env.NEXTAUTH_SECRET' here usually

@@ -52,7 +52,7 @@ BloodInsight AI is an AI-powered health analytics web application that helps peo
    ```bash
    npm install
    ```
-3. Set up environment variables in a `.env` file:
+3. Set up environment variables in a `.env.local` file:
    ```
    GEMINI_API_KEY=your_gemini_api_key
    NEXTAUTH_URL=http://localhost:3000

@@ -10,10 +10,16 @@ const apiKey = process.env.GEMINI_API_KEY;
 
 // Determine the maximum allowed upload size (defaults to 5MB)
 const DEFAULT_MAX_UPLOAD_BYTES = 5 * 1024 * 1024; // 5 MB
-const parsedUploadBytes = parseInt(process.env.MAX_UPLOAD_BYTES ?? '');
-export const MAX_UPLOAD_BYTES = Number.isNaN(parsedUploadBytes)
-  ? DEFAULT_MAX_UPLOAD_BYTES
-  : parsedUploadBytes;
+const rawUploadBytes = process.env.MAX_UPLOAD_BYTES;
+const trimmedUploadBytes = rawUploadBytes?.trim() ?? '';
+const parsedUploadBytes = parseInt(trimmedUploadBytes, 10);
+
+// Validate that the env var is a pure numeric string; otherwise fall back
+// to the default.
+export const MAX_UPLOAD_BYTES =
+  /^\d+$/.test(trimmedUploadBytes) && !Number.isNaN(parsedUploadBytes)
+    ? parsedUploadBytes
+    : DEFAULT_MAX_UPLOAD_BYTES;
 
 // Initialize the File Manager (only if API key exists)
 const fileManager = apiKey ? new GoogleAIFileManager(apiKey) : null;

@@ -57,12 +57,13 @@ BloodInsight AI is an AI-powered health analytics web application that helps peo
 3. Set up environment variables in a `.env.local` file:
    ```
    GEMINI_API_KEY=your_gemini_api_key
-   NEXTAUTH_URL=http://localhost:3000
-   NEXTAUTH_SECRET=your_nextauth_secret
-   GOOGLE_CLIENT_ID=your_google_client_id
-   GOOGLE_CLIENT_SECRET=your_google_client_secret
-   DATABASE_URL=your_postgres_connection_string
-   ```
+  NEXTAUTH_URL=http://localhost:3000
+  NEXTAUTH_SECRET=your_nextauth_secret
+  GOOGLE_CLIENT_ID=your_google_client_id
+  GOOGLE_CLIENT_SECRET=your_google_client_secret
+  DATABASE_URL=your_postgres_connection_string
+  MAX_UPLOAD_BYTES=5242880
+  ```
    **Important:** keep `GEMINI_API_KEY` on the server only; it should never be exposed to the client.
 4. Initialize the database:
    ```bash

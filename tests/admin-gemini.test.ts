@@ -10,7 +10,36 @@ vi.mock('next-auth/next', () => ({
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
-    user: { findUnique: (...args: any[]) => findUniqueMock(...args) }
+    user: {
+      findUnique: (...args: any[]) => findUniqueMock(...args),
+      count: vi.fn().mockResolvedValue(0),
+      findMany: vi.fn().mockResolvedValue([])
+    },
+    session: {
+      count: vi.fn().mockResolvedValue(0)
+    },
+    report: {
+      count: vi.fn().mockResolvedValue(0)
+    },
+    apiUsage: {
+      aggregate: vi.fn().mockResolvedValue({ _count: 0, _avg: { duration: 0 } }),
+      findMany: vi.fn().mockResolvedValue([{ createdAt: new Date(), userId: null, endpoint: '/test', status: 'success', duration: 0 }]),
+      create: vi.fn()
+    }
+  },
+  default: {
+    user: {
+      findUnique: (...args: any[]) => findUniqueMock(...args),
+      count: vi.fn().mockResolvedValue(0),
+      findMany: vi.fn().mockResolvedValue([])
+    },
+    session: { count: vi.fn().mockResolvedValue(0) },
+    report: { count: vi.fn().mockResolvedValue(0) },
+    apiUsage: {
+      aggregate: vi.fn().mockResolvedValue({ _count: 0, _avg: { duration: 0 } }),
+      findMany: vi.fn().mockResolvedValue([{ createdAt: new Date(), userId: null, endpoint: '/test', status: 'success', duration: 0 }]),
+      create: vi.fn()
+    }
   }
 }));
 
@@ -20,14 +49,16 @@ vi.mock('@/lib/gemini-service', () => ({
 
 describe('admin gemini route auth', () => {
   beforeEach(() => {
-    vi.resetModules();
+    vi.clearAllMocks();
     getServerSessionMock = vi.fn();
     findUniqueMock = vi.fn();
     geminiServiceMock = { getSystemPrompt: vi.fn().mockReturnValue('prompt') };
+    delete process.env.GEMINI_API_KEY;
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    delete process.env.GEMINI_API_KEY;
   });
 
   it('returns 401 if not authenticated', async () => {
@@ -53,7 +84,8 @@ describe('admin gemini route auth', () => {
     const { GET } = await import('../src/app/api/admin/gemini/route');
     const res = await GET(new Request('http://test') as any);
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ systemPrompt: 'prompt' });
+    const body = await res.json();
+    expect(body.systemPrompt).toBe('prompt');
     expect(geminiServiceMock.getSystemPrompt).toHaveBeenCalled();
   });
 });

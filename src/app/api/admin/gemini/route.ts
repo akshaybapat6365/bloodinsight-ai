@@ -39,18 +39,18 @@ export async function GET(req: NextRequest) {
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
   const reportsToday = await prisma.report.count({ where: { createdAt: { gte: startOfToday } } });
-  const apiAggregates = await prisma.apiUsage.aggregate({
+  const apiAggregates = (await prisma.apiUsage.aggregate({
     _count: true,
     _avg: { duration: true },
-  });
+  })) || { _count: 0, _avg: { duration: 0 } };
 
-  const recent = await prisma.apiUsage.findMany({
+  const recent = (await prisma.apiUsage.findMany({
     orderBy: { createdAt: 'desc' },
     take: 5,
-  });
+  })) || [];
 
   const userIds = recent.map(r => r.userId).filter(Boolean) as string[];
-  const users = await prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, email: true } });
+  const users = (await prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, email: true } })) || [];
   const userMap = Object.fromEntries(users.map(u => [u.id, u.email]));
 
   const userActivity = recent.map(r => ({

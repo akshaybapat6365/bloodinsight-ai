@@ -17,6 +17,8 @@ describe('POST /api/upload-temp', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    delete process.env.MAX_UPLOAD_BYTES;
+    delete process.env.GEMINI_API_KEY;
   });
 
   it('uploads file and returns fileId', async () => {
@@ -29,7 +31,7 @@ describe('POST /api/upload-temp', () => {
     const { POST } = await import('../src/app/api/upload-temp/route');
 
     const formData = new FormData();
-    formData.append('file', new File(['content'], 'test.txt', { type: 'text/plain' }));
+    formData.append('file', new File(['content'], 'test.pdf', { type: 'application/pdf' }));
     const req = new Request('http://test', { method: 'POST', body: formData });
 
     const res = await POST(req);
@@ -61,5 +63,26 @@ describe('POST /api/upload-temp', () => {
     expect(res.status).toBe(500);
     const body = await res.json();
     expect(body.success).toBe(false);
+  });
+
+  it('returns 400 when mime type not allowed', async () => {
+    process.env.GEMINI_API_KEY = 'key';
+    const { POST } = await import('../src/app/api/upload-temp/route');
+    const formData = new FormData();
+    formData.append('file', new File(['data'], 'script.sh', { type: 'application/x-sh' }));
+    const req = new Request('http://test', { method: 'POST', body: formData });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 413 when file exceeds size limit', async () => {
+    process.env.GEMINI_API_KEY = 'key';
+    process.env.MAX_UPLOAD_BYTES = '5';
+    const { POST } = await import('../src/app/api/upload-temp/route');
+    const formData = new FormData();
+    formData.append('file', new File([new Uint8Array(10)], 'big.pdf', { type: 'application/pdf' }));
+    const req = new Request('http://test', { method: 'POST', body: formData });
+    const res = await POST(req);
+    expect(res.status).toBe(413);
   });
 });

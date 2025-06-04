@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 let retrieveFileMock: any;
 let sendMessageMock: any;
+let prismaMock: any;
 
 vi.mock('@google/generative-ai/server', () => ({
   GoogleAIFileManager: vi.fn().mockImplementation(() => ({
@@ -19,15 +20,28 @@ vi.mock('@google/generative-ai', () => ({
   }))
 }));
 
+vi.mock('@/lib/prisma', () => ({
+  prisma: {
+    geminiConfig: { findFirst: vi.fn().mockResolvedValue(null) },
+    apiUsage: { create: vi.fn() }
+  },
+  default: {
+    geminiConfig: { findFirst: vi.fn().mockResolvedValue(null) },
+    apiUsage: { create: vi.fn() }
+  }
+}));
+
 describe('POST /api/analyze', () => {
   beforeEach(() => {
-    vi.resetModules();
+    vi.clearAllMocks();
     retrieveFileMock = vi.fn();
     sendMessageMock = vi.fn();
+    delete process.env.GEMINI_API_KEY;
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    delete process.env.GEMINI_API_KEY;
   });
 
   it('returns analysis on success', async () => {

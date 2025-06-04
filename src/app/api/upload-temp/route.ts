@@ -5,6 +5,19 @@ import os from 'node:os';       // To get temporary directory
 import path from 'node:path';   // For joining paths
 import { randomUUID } from 'node:crypto'; // For unique filenames
 
+// Maximum file size allowed (bytes). Default to 5MB if not provided
+const MAX_UPLOAD_BYTES = parseInt(process.env.MAX_UPLOAD_BYTES || '5242880', 10);
+
+// Allowed MIME types for uploads
+const ALLOWED_MIME_TYPES = [
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/tiff',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+];
+
 // Get API Key from server-side environment variables
 const apiKey = process.env.GEMINI_API_KEY;
 
@@ -29,6 +42,15 @@ export async function POST(request: Request) {
 
     if (!file) {
       return NextResponse.json({ success: false, error: 'No file uploaded.' }, { status: 400 });
+    }
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+      const maxMb = Math.round(MAX_UPLOAD_BYTES / (1024 * 1024));
+      return NextResponse.json({ success: false, error: `File exceeds maximum size of ${maxMb}MB.` }, { status: 413 });
+    }
+
+    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      return NextResponse.json({ success: false, error: 'Unsupported file type.' }, { status: 400 });
     }
 
     // 1. Save file temporarily

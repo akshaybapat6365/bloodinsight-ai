@@ -1,15 +1,9 @@
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { prisma } from "@/lib/prisma";
 
-// Initialize the Google Generative AI with API key from server-side environment variable
-const apiKey = process.env.GEMINI_API_KEY; 
-if (!apiKey) {
-  console.error("GEMINI_API_KEY environment variable is not set!");
-  // Optionally throw an error or handle the missing key appropriately
-  // For now, we'll let the GoogleGenerativeAI constructor handle the missing key error downstream
-}
-
-let systemPrompt = `You are BloodInsight AI, an assistant specialized in analyzing and explaining blood test and lab reports. 
+// Default system prompt used if none is stored in the database
+const DEFAULT_PROMPT = `You are BloodInsight AI, an assistant specialized in analyzing and explaining blood test and lab reports.
 Your task is to:
 1. Extract key metrics and values from the provided lab report
 2. Identify which values are within normal range and which are outside normal range
@@ -29,53 +23,77 @@ export class GeminiService {
   private model: any; // Consider using a more specific type if available from SDK
   private currentApiKey: string | null = null;
 
-  constructor() {
-    if (apiKey) { // Only initialize if the key exists
-      this.currentApiKey = apiKey;
-      this.genAI = new GoogleGenerativeAI(apiKey);
+  private systemPrompt = DEFAULT_PROMPT;
+
+  constructor() {}
+
+  // Load configuration from the database (API key and system prompt)
+  public async init() {
+    const config = await prisma.geminiConfig.findFirst();
+    const key = config?.apiKey ?? process.env.GEMINI_API_KEY ?? null;
+
+    const promptRecord = await prisma.systemPrompt.findFirst({ where: { isDefault: true } });
+    if (promptRecord?.content) {
+      this.systemPrompt = promptRecord.content;
+    }
+
+    if (key) {
+      this.currentApiKey = key;
+      this.genAI = new GoogleGenerativeAI(key);
       this.model = this.genAI.getGenerativeModel({
-        model: "gemini-2.5-pro-exp-03-25", // Ensure this model name is correct and available
+        model: "gemini-2.5-pro-exp-03-25",
       });
     } else {
-      // Handle the case where API key is missing - maybe disable functionality?
       console.error("GeminiService initialized without API key.");
-      this.model = null; // Ensure model is null if service can't initialize
+      this.model = null;
     }
   }
 
   // Method to update API key (for admin use)
-  public updateApiKey(newKey: string) {
-    if (!newKey || newKey.trim() === '') {
+  public async updateApiKey(newKey: string) {
+    if (!newKey || newKey.trim() === "") {
       throw new Error("API key cannot be empty");
     }
-    
+
     try {
-      // Store the new key
+      const existing = await prisma.geminiConfig.findFirst();
+      if (existing) {
+        await prisma.geminiConfig.update({ where: { id: existing.id }, data: { apiKey: newKey } });
+      } else {
+        await prisma.geminiConfig.create({ data: { apiKey: newKey } });
+      }
+
       this.currentApiKey = newKey;
-      
-      // Reinitialize the service with the new key
       this.genAI = new GoogleGenerativeAI(newKey);
       this.model = this.genAI.getGenerativeModel({
         model: "gemini-2.5-pro-exp-03-25",
       });
-      
+
       console.log("Gemini API key updated successfully");
       return true;
     } catch (error) {
       console.error("Failed to update Gemini API key:", error);
-      throw new Error("Failed to update API key: " + (error instanceof Error ? error.message : "Unknown error"));
+      throw new Error(
+        "Failed to update API key: " + (error instanceof Error ? error.message : "Unknown error")
+      );
     }
   }
 
   // Method to update system prompt (for admin use)
-  public updateSystemPrompt(newPrompt: string) {
-    systemPrompt = newPrompt;
+  public async updateSystemPrompt(newPrompt: string) {
+    const existing = await prisma.systemPrompt.findFirst({ where: { isDefault: true } });
+    if (existing) {
+      await prisma.systemPrompt.update({ where: { id: existing.id }, data: { content: newPrompt } });
+    } else {
+      await prisma.systemPrompt.create({ data: { name: "Default", content: newPrompt, isDefault: true } });
+    }
+    this.systemPrompt = newPrompt;
     return true;
   }
 
   // Method to get current system prompt
   public getSystemPrompt() {
-    return systemPrompt;
+    return this.systemPrompt;
   }
 
   // Method to analyze text content from a lab report
@@ -84,7 +102,7 @@ export class GeminiService {
       return { success: false, error: "Gemini service not initialized (API key missing?)." };
     }
     try {
-      const prompt = `${systemPrompt}\n\nHere is the lab report to analyze:\n${content}`;
+      const prompt = `${this.systemPrompt}\n\nHere is the lab report to analyze:\n${content}`;
       
       const result = await this.model.generateContent(prompt);
       const response = await result.response;
@@ -109,7 +127,7 @@ export class GeminiService {
       return { success: false, error: "Gemini service not initialized (API key missing?)." };
     }
     try {
-      const prompt = `${systemPrompt}\n\nAnalyze the lab report in this image:`;
+      const prompt = `${this.systemPrompt}\n\nAnalyze the lab report in this image:`;
       
       const result = await this.model.generateContent([
         prompt,
@@ -141,9 +159,10 @@ export class GeminiService {
 // Create a singleton instance
 let geminiServiceInstance: GeminiService | null = null;
 
-export const getGeminiService = () => {
+export const getGeminiService = async () => {
   if (!geminiServiceInstance) {
     geminiServiceInstance = new GeminiService();
+    await geminiServiceInstance.init();
   }
   return geminiServiceInstance;
 };

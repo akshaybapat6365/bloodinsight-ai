@@ -113,9 +113,9 @@ return `401` or `403`.
     { "systemPrompt": "..." }
     ```
 - **POST** `/api/admin/gemini`
-  - Accepts a JSON payload with `action` and `value` fields.
-    - `{"action": "updateApiKey", "value": "NEW_KEY"}` updates the Gemini API key.
-    - `{"action": "updateSystemPrompt", "value": "PROMPT_TEXT"}` updates the system prompt.
+  - Accepts a JSON payload with `action` and `value` fields. The values are persisted in the database.
+    - `{"action": "updateApiKey", "value": "NEW_KEY"}` stores a new Gemini API key.
+    - `{"action": "updateSystemPrompt", "value": "PROMPT_TEXT"}` updates the default system prompt.
 
 ## Educational Purpose
 

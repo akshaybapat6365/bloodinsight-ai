@@ -21,7 +21,7 @@ async function verifyAdmin() {
 export async function GET(req: NextRequest) {
   const errorResponse = await verifyAdmin();
   if (errorResponse) return errorResponse;
-  const geminiService = getGeminiService();
+  const geminiService = await getGeminiService();
   return NextResponse.json({ systemPrompt: geminiService.getSystemPrompt() });
 }
 
@@ -30,13 +30,13 @@ export async function POST(req: NextRequest) {
     const errorResponse = await verifyAdmin();
     if (errorResponse) return errorResponse;
     const { action, value } = await req.json();
-    const geminiService = getGeminiService();
+    const geminiService = await getGeminiService();
 
     if (action === 'updateApiKey') {
-      geminiService.updateApiKey(value);
+      await geminiService.updateApiKey(value);
       return NextResponse.json({ success: true });
     } else if (action === 'updateSystemPrompt') {
-      geminiService.updateSystemPrompt(value);
+      await geminiService.updateSystemPrompt(value);
       return NextResponse.json({ success: true });
     }
 

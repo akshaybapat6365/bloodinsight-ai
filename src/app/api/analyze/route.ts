@@ -4,6 +4,7 @@ import { GoogleAIFileManager } from '@google/generative-ai/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';
+import { getGeminiService } from '@/lib/gemini-service';
 
 export async function POST(req: NextRequest) {
   const start = Date.now();
@@ -24,6 +25,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'API key not configured' }, { status: 500 });
     }
 
+    const geminiService = await getGeminiService();
+    const systemPrompt = geminiService.getSystemPrompt();
+
     const genAI = new GoogleGenerativeAI(apiKey);
     const fileManager = new GoogleAIFileManager(apiKey);
 
@@ -34,20 +38,7 @@ export async function POST(req: NextRequest) {
 
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-pro-preview-03-25',
-      systemInstruction: `You are BloodInsight AI, an assistant specialized in analyzing and explaining blood test and lab reports.
-Your task is:
-1. Extract key metrics and values from the provided lab report
-2. Identify which values are within normal range and which are outside normal range
-3. Provide a clear, simple explanation of what each metric means and its significance
-4. Offer general insights about the overall health picture based on these results
-5. Suggest potential lifestyle modifications or follow-up actions when appropriate
-
-Important notes:
-- Always clarify that your analysis is for educational purposes only and not a substitute for medical advice
-- Use plain, accessible language that a non-medical person can understand
-- When values are outside normal range, explain the potential implications without causing alarm
-- Organize information in a structured, easy-to-read format
-- Focus on factual information and avoid speculative diagnoses`,
+      systemInstruction: systemPrompt,
     });
 
     const generationConfig = {

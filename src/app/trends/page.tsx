@@ -99,16 +99,16 @@ export default function TrendsPage() {
     return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
-  // Find report ID for a specific reading
-  const getReportIdForReading = (reading: MetricReading) => {
-    const report = allReports.find(report => 
-      report.readings.some(r => 
-        r.metricId === reading.metricId && 
-        r.date === reading.date && 
+  // Find file ID for a specific reading
+  const getFileIdForReading = (reading: MetricReading) => {
+    const report = allReports.find(report =>
+      report.readings.some(r =>
+        r.metricId === reading.metricId &&
+        r.date === reading.date &&
         r.value === reading.value
       )
     );
-    return report?.id || "";
+    return report?.fileId || "";
   };
 
   return (
@@ -309,7 +309,7 @@ export default function TrendsPage() {
                                   </span>
                                 </td>
                                 <td className="py-3 px-4 text-sm">
-                                  <Link href={`/analysis?fileId=${getReportIdForReading(reading)}`} className="text-primary hover:underline">
+                                  <Link href={`/analysis?fileId=${getFileIdForReading(reading)}`} className="text-primary hover:underline">
                                     View Report
                                   </Link>
                                 </td>
@@ -354,7 +354,7 @@ export default function TrendsPage() {
                               {report.readings.length} metrics
                             </td>
                             <td className="py-3 px-4 text-sm">
-                              <Link href={`/analysis?fileId=${report.id}`} className="text-primary hover:underline">
+                              <Link href={`/analysis?fileId=${report.fileId}`} className="text-primary hover:underline">
                                 View Details
                               </Link>
                             </td>

@@ -24,6 +24,7 @@ export interface Report {
   userId: string;
   date: string;
   name: string;
+  fileId?: string;
   readings: MetricReading[];
 }
 

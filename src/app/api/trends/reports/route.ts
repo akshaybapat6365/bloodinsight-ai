@@ -25,6 +25,7 @@ export async function GET() {
     userId: r.userId,
     date: r.date.toISOString(),
     name: r.name,
+    fileId: r.fileId ?? r.fileUrl ?? null,
     readings: r.readings.map(reading => ({
       metricId: reading.metricId,
       value: reading.value,

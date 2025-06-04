@@ -57,6 +57,7 @@ model Report {
   name        String
   date        DateTime
   fileUrl     String?
+  fileId      String?
   fileType    String?
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt

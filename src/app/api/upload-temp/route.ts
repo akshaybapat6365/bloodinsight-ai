@@ -57,9 +57,10 @@ export async function POST(request: Request) {
     // 1. Save file temporarily
     const fileBuffer = Buffer.from(await file.arrayBuffer());
     const tempDir = os.tmpdir(); // Get system temp directory
-    // Create a unique temporary filename
-    const uniqueFilename = `${randomUUID()}-${file.name}`; 
-    tempFilePath = path.join(tempDir, uniqueFilename); 
+    // Create a unique temporary filename (sanitize to prevent path traversal)
+    const sanitizedName = path.basename(file.name);
+    const uniqueFilename = `${randomUUID()}-${sanitizedName}`;
+    tempFilePath = path.join(tempDir, uniqueFilename);
 
     console.log(`Saving temporary file to: ${tempFilePath}`);
     await fs.writeFile(tempFilePath, fileBuffer);

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs/promises';
+import path from 'node:path';
 
 let uploadFileMock: any;
 
@@ -36,6 +37,29 @@ describe('POST /api/upload-temp', () => {
     const json = await res.json();
     expect(json).toEqual({ success: true, fileId });
     expect(writeSpy).toHaveBeenCalled();
+    expect(unlinkSpy).toHaveBeenCalled();
+  });
+
+  it('sanitizes filenames containing separators', async () => {
+    process.env.GEMINI_API_KEY = 'key';
+    const writeSpy = vi.spyOn(fs, 'writeFile').mockResolvedValue();
+    const unlinkSpy = vi.spyOn(fs, 'unlink').mockResolvedValue();
+    uploadFileMock.mockResolvedValue({ file: { name: 'files/123' } });
+
+    const { POST } = await import('../src/app/api/upload-temp/route');
+
+    const trickyName = '../path/evil.txt';
+    const formData = new FormData();
+    formData.append('file', new File(['content'], trickyName, { type: 'text/plain' }));
+    const req = new Request('http://test', { method: 'POST', body: formData });
+
+    await POST(req);
+
+    expect(writeSpy).toHaveBeenCalled();
+    const calledPath = writeSpy.mock.calls[0][0] as string;
+    const expectedBasename = path.basename(trickyName);
+    expect(path.basename(calledPath)).toMatch(new RegExp(`${expectedBasename}$`));
+    expect(calledPath).not.toContain(trickyName);
     expect(unlinkSpy).toHaveBeenCalled();
   });
 

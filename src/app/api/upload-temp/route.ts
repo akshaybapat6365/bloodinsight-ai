@@ -8,6 +8,13 @@ import { randomUUID } from 'node:crypto'; // For unique filenames
 // Get API Key from server-side environment variables
 const apiKey = process.env.GEMINI_API_KEY;
 
+// Determine the maximum allowed upload size (defaults to 5MB)
+const DEFAULT_MAX_UPLOAD_BYTES = 5 * 1024 * 1024; // 5 MB
+const parsedUploadBytes = parseInt(process.env.MAX_UPLOAD_BYTES ?? '');
+export const MAX_UPLOAD_BYTES = Number.isNaN(parsedUploadBytes)
+  ? DEFAULT_MAX_UPLOAD_BYTES
+  : parsedUploadBytes;
+
 // Initialize the File Manager (only if API key exists)
 const fileManager = apiKey ? new GoogleAIFileManager(apiKey) : null;
 
@@ -29,6 +36,16 @@ export async function POST(request: Request) {
 
     if (!file) {
       return NextResponse.json({ success: false, error: 'No file uploaded.' }, { status: 400 });
+    }
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `File size exceeds limit of ${MAX_UPLOAD_BYTES} bytes.`
+        },
+        { status: 400 }
+      );
     }
 
     // 1. Save file temporarily

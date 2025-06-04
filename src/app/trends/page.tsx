@@ -273,7 +273,7 @@ export default function TrendsPage() {
                                   </span>
                                 </td>
                                 <td className="py-3 px-4 text-sm">
-                                  <Link href={`/analysis?report=${getReportIdForReading(reading)}`} className="text-primary hover:underline">
+                                  <Link href={`/analysis?fileId=${getReportIdForReading(reading)}`} className="text-primary hover:underline">
                                     View Report
                                   </Link>
                                 </td>
@@ -318,7 +318,7 @@ export default function TrendsPage() {
                               {report.readings.length} metrics
                             </td>
                             <td className="py-3 px-4 text-sm">
-                              <Link href={`/analysis?report=${report.id}`} className="text-primary hover:underline">
+                              <Link href={`/analysis?fileId=${report.id}`} className="text-primary hover:underline">
                                 View Details
                               </Link>
                             </td>

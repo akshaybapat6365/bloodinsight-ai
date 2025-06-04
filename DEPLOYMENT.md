@@ -35,7 +35,7 @@ DATABASE_URL=your_postgres_connection_string
 
 ### 2. Database Migration
 
-After deploying, you'll need to run the initial migration to set up the database schema:
+After deploying, you'll need to run the initial migration to set up the database schema. The build script (`npm run build`) now automatically executes `prisma generate` and `prisma migrate deploy`, so the migration normally runs during deployment:
 
 ```bash
 # Install Prisma CLI
@@ -48,7 +48,7 @@ export DATABASE_URL=your_postgres_connection_string
 prisma migrate deploy
 ```
 
-Alternatively, you can use the Vercel CLI to run the migration:
+If needed, you can still run the migration manually using the Vercel CLI:
 
 ```bash
 vercel env pull
@@ -78,7 +78,7 @@ npx prisma migrate deploy
    ```bash
    npm install
    ```
-   This step must be completed prior to executing `npm run build`.
+   This step must be completed prior to executing `npm run build`, which also runs `prisma generate` and `prisma migrate deploy`.
 4. Configure the environment variables
 5. Deploy the application
 

@@ -77,14 +77,14 @@ BloodInsight AI is an AI-powered health analytics web application that helps peo
    npm run lint
    npm run build
    ```
-7. The `/api/upload-temp` route checks the MIME type of the uploaded file. Only the following types are allowed:
+7. The `/api/upload-temp` route validates uploaded files. The server accepts only the following MIME types:
    - `application/pdf`
    - `image/jpeg`
    - `image/png`
    - `image/tiff`
    - `application/vnd.ms-excel`
    - `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
-   Uploads with any other MIME type will return a `400` error.
+   Any other MIME type will cause the endpoint to return a `400` error.
 
 ## Deployment
 

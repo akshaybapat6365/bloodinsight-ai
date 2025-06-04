@@ -92,6 +92,22 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions.
 - **Trends Analysis**: Interactive visualizations of health metrics over time
 - **Export Functionality**: PDF and CSV export options
 
+## Admin API
+
+The `/api/admin/gemini` endpoint allows administrators to manage Gemini-related
+settings. The route is protected by NextAuth and only users with `isAdmin = true`
+can access it. Unauthorized requests return `401` or `403`.
+
+- **GET** `/api/admin/gemini`
+  - Returns the current system prompt:
+    ```json
+    { "systemPrompt": "..." }
+    ```
+- **POST** `/api/admin/gemini`
+  - Accepts a JSON payload with `action` and `value` fields.
+    - `{"action": "updateApiKey", "value": "NEW_KEY"}` updates the Gemini API key.
+    - `{"action": "updateSystemPrompt", "value": "PROMPT_TEXT"}` updates the system prompt.
+
 ## Educational Purpose
 
 This application is for educational purposes only and is not intended to replace medical advice. Always consult with healthcare providers regarding lab results and health decisions.

@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 interface AnalysisResult {
   success: boolean;
   analysis?: string;
+  timestamp?: string;
   error?: string;
 }
 

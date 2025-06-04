@@ -12,13 +12,29 @@ export default function AdminPage() {
   const [systemPrompt, setSystemPrompt] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateMessage, setUpdateMessage] = useState({ type: "", message: "" });
+  const [usageStats, setUsageStats] = useState({
+    totalUsers: 0,
+    activeUsers: 0,
+    totalReports: 0,
+    reportsToday: 0,
+    apiCalls: 0,
+    averageProcessingTime: 0,
+  });
+  const [userActivity, setUserActivity] = useState<{
+    time: string;
+    user: string;
+    action: string;
+    duration: number;
+  }[]>([]);
 
-  // Load the current system prompt from the server when the component mounts
+  // Load the current system prompt and usage stats from the server when the component mounts
   useEffect(() => {
     fetch("/api/admin/gemini")
       .then((res) => res.json())
       .then((data) => {
         if (data.systemPrompt) setSystemPrompt(data.systemPrompt);
+        if (data.usageStats) setUsageStats(data.usageStats);
+        if (data.userActivity) setUserActivity(data.userActivity);
       })
       .catch((err) => console.error(err));
   }, []);
@@ -76,24 +92,6 @@ export default function AdminPage() {
     }
   };
 
-  // Sample data for the dashboard
-  const usageStats = {
-    totalUsers: 127,
-    activeUsers: 42,
-    totalReports: 315,
-    reportsToday: 18,
-    apiCalls: 289,
-    averageProcessingTime: "2.3s",
-  };
-
-  // Sample data for user activity
-  const userActivity = [
-    { time: "2025-04-02 21:45", user: "user123@example.com", action: "Uploaded lab report", reportType: "Blood Panel" },
-    { time: "2025-04-02 21:30", user: "user456@example.com", action: "Viewed trends", reportType: "N/A" },
-    { time: "2025-04-02 21:15", user: "user789@example.com", action: "Uploaded lab report", reportType: "Lipid Panel" },
-    { time: "2025-04-02 21:00", user: "user123@example.com", action: "Exported results", reportType: "N/A" },
-    { time: "2025-04-02 20:45", user: "user321@example.com", action: "Uploaded lab report", reportType: "Comprehensive Metabolic Panel" },
-  ];
 
   return (
     <AdminRoute>
@@ -168,7 +166,7 @@ export default function AdminPage() {
                       <p className="text-sm text-muted-foreground">API Calls</p>
                     </div>
                     <div>
-                      <p className="text-3xl font-bold">{usageStats.averageProcessingTime}</p>
+                      <p className="text-3xl font-bold">{usageStats.averageProcessingTime}ms</p>
                       <p className="text-sm text-muted-foreground">Avg. Processing</p>
                     </div>
                   </div>
@@ -184,7 +182,7 @@ export default function AdminPage() {
                         <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Time</th>
                         <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">User</th>
                         <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Action</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Report Type</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Duration (ms)</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -193,7 +191,7 @@ export default function AdminPage() {
                           <td className="py-3 px-4 text-sm">{activity.time}</td>
                           <td className="py-3 px-4 text-sm">{activity.user}</td>
                           <td className="py-3 px-4 text-sm">{activity.action}</td>
-                          <td className="py-3 px-4 text-sm">{activity.reportType}</td>
+                          <td className="py-3 px-4 text-sm">{activity.duration}</td>
                         </tr>
                       ))}
                     </tbody>

@@ -1,15 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { GoogleAIFileManager } from '@google/generative-ai/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(req: NextRequest) {
+  const start = Date.now();
+  const session = await getServerSession(authOptions).catch(() => null);
+  const userRecord = session
+    ? await prisma.user.findUnique({ where: { email: session.user?.email ?? '' }, select: { id: true } })
+    : null;
+
   try {
     const { fileId } = await req.json();
     if (!fileId || typeof fileId !== 'string') {
       return NextResponse.json({ success: false, error: 'No fileId provided' }, { status: 400 });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    const config = await prisma.geminiConfig.findFirst();
+    const apiKey = config?.apiKey ?? process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return NextResponse.json({ success: false, error: 'API key not configured' }, { status: 500 });
     }
@@ -58,6 +68,15 @@ Important notes:
       },
     ]);
 
+    await prisma.apiUsage.create({
+      data: {
+        endpoint: '/api/analyze',
+        duration: Date.now() - start,
+        status: 'success',
+        userId: userRecord?.id,
+      },
+    });
+
     return NextResponse.json({
       success: true,
       analysis: result.response.text(),
@@ -65,6 +84,15 @@ Important notes:
     });
   } catch (error) {
     console.error('Error processing file:', error);
+    await prisma.apiUsage.create({
+      data: {
+        endpoint: '/api/analyze',
+        duration: Date.now() - start,
+        status: 'error',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        userId: userRecord?.id,
+      },
+    });
     return NextResponse.json({ success: false, error: 'Failed to process file' }, { status: 500 });
   }
 }

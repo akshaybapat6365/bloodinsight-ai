@@ -59,6 +59,33 @@ export async function POST(req: NextRequest) {
       },
     ]);
 
+    const analysisText = result.response.text();
+
+    if (userRecord) {
+      const existing = await prisma.report.findFirst({
+        where: { userId: userRecord.id, fileId },
+        select: { id: true },
+      });
+
+      if (existing) {
+        await prisma.report.update({
+          where: { id: existing.id },
+          data: { textAnalysis: analysisText },
+        });
+      } else {
+        await prisma.report.create({
+          data: {
+            name: 'Lab Report',
+            date: new Date(),
+            fileId,
+            fileType: mimeType,
+            userId: userRecord.id,
+            textAnalysis: analysisText,
+          },
+        });
+      }
+    }
+
     await prisma.apiUsage.create({
       data: {
         endpoint: '/api/analyze',
@@ -70,7 +97,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      analysis: result.response.text(),
+      analysis: analysisText,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

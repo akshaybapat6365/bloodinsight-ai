@@ -81,4 +81,23 @@ describe('POST /api/upload-temp', () => {
     expect(writeSpy).not.toHaveBeenCalled();
     expect(unlinkSpy).not.toHaveBeenCalled();
   });
+
+  it('uses default limit when MAX_UPLOAD_BYTES has letters', async () => {
+    process.env.GEMINI_API_KEY = 'key';
+    process.env.MAX_UPLOAD_BYTES = '5mb';
+    const writeSpy = vi.spyOn(fs, 'writeFile').mockResolvedValue();
+    const unlinkSpy = vi.spyOn(fs, 'unlink').mockResolvedValue();
+
+    const { POST, MAX_UPLOAD_BYTES } = await import('../src/app/api/upload-temp/route');
+
+    const big = new Uint8Array(MAX_UPLOAD_BYTES + 1);
+    const formData = new FormData();
+    formData.append('file', new File([big], 'big.dat', { type: 'application/octet-stream' }));
+    const req = new Request('http://test', { method: 'POST', body: formData });
+
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    expect(writeSpy).not.toHaveBeenCalled();
+    expect(unlinkSpy).not.toHaveBeenCalled();
+  });
 });

@@ -28,6 +28,7 @@ export default function TrendsPage() {
   const [reports, setReports] = useState<Report[]>([]);
   const [selectedMetric, setSelectedMetric] = useState<string>("");
   const [activeTab, setActiveTab] = useState("timeline");
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -38,6 +39,7 @@ export default function TrendsPage() {
         if (m.length > 0) setSelectedMetric(m[0].id);
       } catch (err) {
         console.error("Failed to load trends data", err);
+        setLoadError("Failed to load trends data. Please try again later.");
       }
     };
     load();
@@ -134,6 +136,12 @@ export default function TrendsPage() {
               <Link href="/upload">Upload New Report</Link>
             </Button>
           </div>
+
+          {loadError && (
+            <div className="mb-6 p-3 bg-destructive/10 border border-destructive/30 rounded text-destructive text-sm">
+              {loadError}
+            </div>
+          )}
 
           <Tabs defaultValue="timeline" className="w-full" onValueChange={setActiveTab}>
             <TabsList className="grid grid-cols-2 mb-8">
